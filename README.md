@@ -1,5 +1,8 @@
 # AgriFlow — Smart Irrigation Intelligence
 
+**Live demo: https://agriflow-web-nu.vercel.app** (API: https://agriflow-api-90yf.onrender.com)
+> Free-tier hosts sleep when idle — first request can take ~50s.
+
 Decision-support platform that answers one question for a farmer in seconds:
 **"Does my field need irrigation?"** — and explains *why*, with honest labels on
 every measurement, forecast, and estimate.
