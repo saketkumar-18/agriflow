@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+*.db-wal
+*.db-shm
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Node / Next
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+
+# Env & secrets — never commit
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ML artifacts (models are stored via registry/LFS, not git)
+ml/models/*/
+!ml/models/.gitkeep
+ml/datasets/*.csv

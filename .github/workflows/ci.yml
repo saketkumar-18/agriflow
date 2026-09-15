@@ -1,0 +1,85 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Lint (ruff)
+        run: ruff check app tests
+      - name: Unit + integration tests
+        run: pytest tests -q
+      - name: Migrations roundtrip (alembic upgrade/downgrade)
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+        env:
+          DATABASE_URL: sqlite:///./ci.db
+      - name: Import check
+        run: python -c "from app.main import app"
+
+  ml:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt -r ../services/api/requirements.txt
+      - name: ML pipeline smoke (synthetic fixture, deterministic)
+        run: |
+          cd src
+          python - <<'EOF'
+          import numpy as np, pandas as pd
+          rng = np.random.default_rng(3); rows=[]
+          for i in range(400):
+              dep = rng.uniform(0,100); rain = rng.uniform(0,20)
+              need = int((dep>55 and rain<9) ^ (rng.random()<0.1))
+              rows.append(dict(moisture_pct=rng.uniform(5,24),moisture_age_h=rng.uniform(1,20),
+                rain_next_24h_pct=rng.uniform(0,100),rain_next_48h_mm=rain,recent_rain_72h_mm=rng.uniform(0,15),
+                et0_mm=rng.uniform(2,7),etc_mm=rng.uniform(1.5,6),depletion_pct=dep,
+                area_ha=rng.uniform(0.3,3),days_since_irrigation=rng.uniform(1,14),
+                crop=rng.choice(['Wheat','Rice','Tomato']),stage=rng.choice(['VEGETATIVE','FLOWERING']),
+                soil=rng.choice(['Loamy','Clay']),method=rng.choice(['drip','flood']),
+                label_need=need,target_mm=(round(rng.uniform(8,30),1) if need and rng.random()<0.8 else None)))
+          pd.DataFrame(rows).to_csv('../datasets/ci_smoke.csv', index=False)
+          EOF
+          python train.py --csv ../datasets/ci_smoke.csv --model-dir ../models/ci
+          python evaluate.py --csv ../datasets/ci_smoke.csv --model-dir ../models/ci
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint --if-present
+      - name: Production build
+        run: npm run build
