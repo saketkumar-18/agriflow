@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     # Database: SQLite by default (zero-setup dev/demo), PostgreSQL in production.
     database_url: str = "sqlite:///./agriflow.db"
+    # Optional: isolate all AgriFlow tables in this Postgres schema (shared instances)
+    pg_schema: str = ""
 
     # Auth
     auth_secret: str = "dev-only-insecure-secret-change-me"

@@ -41,3 +41,8 @@ render_env.json
 render_env_arr.json
 services/api/scripts/render_payload*.json
 services/api/scripts/render_resp.json
+pg_probe.json
+pg_key.txt
+render_env*.json
+render_pg.json
+render_pg_full.json
