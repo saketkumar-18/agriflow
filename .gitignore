@@ -34,3 +34,6 @@ Thumbs.db
 ml/models/*/
 !ml/models/.gitkeep
 ml/datasets/*.csv
+services/api/scripts/render_payload.json
+services/api/scripts/render_resp.json
+*.env
