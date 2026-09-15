@@ -17,10 +17,9 @@ d = json.loads(Path("render_pg_full.json").read_text())
 d = d.get("data", d)
 ci = d["connectionInfo"]
 internal = ci["internalConnectionString"]
-assert internal.startswith("postgres://"), "unexpected scheme"
-
-# force ssl over the password portion only (render internal usually trusts; keep require-safe)
-url = "postgresql+psycopg2://" + internal[len("postgres://"):]
+m = re.match(r"^(postgres(?:ql)?)(\+\w+)?(://.*)$", internal)
+assert m, "unexpected scheme: " + internal.split("://")[0]
+url = "postgresql+psycopg2" + m.group(3)
 if "?" not in url:
     url += "?sslmode=require"
 Path("render_dburl.txt").write_text(url)

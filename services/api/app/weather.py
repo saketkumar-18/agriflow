@@ -172,12 +172,15 @@ def _maybe_int(v):
 
 
 class CachedProvider:
-    """TTL cache wrapper — spec 48/51: cache weather, do not hammer the provider."""
+    """TTL cache wrapper — spec 48/51: cache weather, do not hammer the provider.
+    On provider failure we still SERVE the last good snapshot (marked via
+    fetched_at staleness) rather than storming the API on every retry."""
 
     def __init__(self, inner: WeatherProvider, ttl_seconds: int):
         self.inner = inner
         self.ttl = ttl_seconds
         self._cache: dict[str, tuple[float, WeatherSnapshot]] = {}
+        self._last_good: dict[str, WeatherSnapshot] = {}
 
     @property
     def name(self) -> str:
@@ -190,8 +193,16 @@ class CachedProvider:
         if hit and now - hit[0] < self.ttl:
             return hit[1]
         snap = self.inner.get_weather(lat, lon, days)
-        if snap.available:  # do not cache failures; next request retries provider
+        if snap.available:
             self._cache[key] = (now, snap)
+            self._last_good[key] = snap
+        else:
+            # failure: extend last good (serve stale with old fetched_at, honest),
+            # and back off hard for 5 min so we don't storm a rate-limited provider
+            stale = self._last_good.get(key)
+            if stale is not None:
+                self._cache[key] = (now - self.ttl + 300, stale)  # retry only in 5 min
+                return stale
         return snap
 
 

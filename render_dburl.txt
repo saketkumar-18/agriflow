@@ -1,0 +1,1 @@
+postgresql+psycopg2://lf_network_db_user:Bi2iz45u5C7sYmXAJnVqFml7BoujwGw5@dpg-dafcg0u7bikc73824pg0-a/lf_network_db?sslmode=require
