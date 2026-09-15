@@ -100,6 +100,11 @@ def run_once() -> int:
 
 
 def main() -> None:
+    import sys
+    if "--once" in sys.argv:
+        n = run_once()
+        log.info("single pass: processed %s jobs", n)
+        return
     log.info("AgriFlow worker started (DB-backed queue; poll every 60s)")
     while True:
         try:

@@ -207,7 +207,7 @@ def notify(db: Session, user: User, ntype: str, severity: str, title_key: str,
         ch += ",email"
         try:
             from app import notify_email
-            notify_email.send_async(user.email, title_key, params)
+            notify_email.send_async(user.email, title_key, params, user.language)
         except Exception as exc:  # pragma: no cover
             log.warning("email delivery failed: %s", exc)
     n = Notification(user_id=user.id, type=ntype, severity=severity, title_key=title_key,
