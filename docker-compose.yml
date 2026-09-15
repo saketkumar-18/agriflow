@@ -22,7 +22,9 @@ services:
       retries: 5
 
   api:
-    build: ./services/api
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg2://agriflow:agriflow@postgres:5432/agriflow
@@ -38,7 +40,9 @@ services:
     restart: unless-stopped
 
   worker:
-    build: ./services/api
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
     command: python -m app.worker
     env_file: .env
     environment:

@@ -17,10 +17,21 @@ CFG = Path.home() / ".render" / "cli.yaml"
 
 
 def api_key() -> str:
-    for line in CFG.read_text().splitlines():
-        line = line.strip()
-        if line.startswith("api-key:") or line.startswith("apiKey:"):
+    """cli.yaml nests: api:\\n  key: rk_...  (fallback to any api-key:/apiKey: line)."""
+    lines = CFG.read_text().splitlines()
+    in_api = False
+    for line in lines:
+        if line.startswith("api:"):
+            in_api = True
+            continue
+        if in_api and line.strip().startswith("key:"):
             return line.split(":", 1)[1].strip()
+        if line and not line.startswith((" ", "\t")) and in_api:
+            in_api = False
+    for line in lines:
+        s = line.strip()
+        if s.startswith("api-key:") or s.startswith("apiKey:"):
+            return s.split(":", 1)[1].strip()
     raise SystemExit("no api-key in " + str(CFG))
 
 
