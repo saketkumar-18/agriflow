@@ -209,6 +209,15 @@ class CachedProvider:
             return self._cache[key][1]
         return snap
 
+    def peek(self, lat: float, lon: float, days: int = 6) -> WeatherSnapshot | None:
+        """Cache-state only; NEVER calls the provider. Used by /api/health so
+        monitoring traffic can never become provider load."""
+        key = f"{lat_key(lat, lon)}|{days}"
+        hit = self._cache.get(key)
+        if hit:
+            return hit[1]
+        return self._last_good.get(key)
+
 
 def make_provider() -> WeatherProvider:
     kind = settings.weather_provider.lower()

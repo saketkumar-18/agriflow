@@ -130,11 +130,18 @@ def _health_payload():
         db_ok = False
     from app.weather import weather_provider
     if settings.weather_provider.lower().startswith("open"):
-        snap = weather_provider().get_weather(26.14, 91.72, days=1)
-        wx = "ok" if snap.available else "error"
+        prov = weather_provider()
+        # peek = cache-state only; health polling must never become provider load
+        peek = getattr(prov, "peek", None)
+        if peek is not None:
+            snap = peek(26.14, 91.72, days=1)
+            wx = "not_probed" if snap is None else ("ok" if snap.available else "error")
+        else:
+            snap = prov.get_weather(26.14, 91.72, days=1)
+            wx = "ok" if snap.available else "error"
     else:
         wx = "not_configured"
-    state = "ok" if db_ok and wx in ("ok", "not_configured") else "degraded"
+    state = "ok" if db_ok and wx in ("ok", "not_configured", "not_probed") else "degraded"
     return {"status": state, "db": "ok" if db_ok else "error", "weather": wx,
             "version": settings.version}
 
