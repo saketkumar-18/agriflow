@@ -202,7 +202,11 @@ class CachedProvider:
             stale = self._last_good.get(key)
             if stale is not None:
                 self._cache[key] = (now - self.ttl + 300, stale)  # retry only in 5 min
-                return stale
+            else:
+                # no history: cache the honest failure briefly (60s) so a persistent
+                # 429 doesn't cost one provider call per request
+                self._cache[key] = (now - self.ttl + 60, snap)
+            return self._cache[key][1]
         return snap
 
 
