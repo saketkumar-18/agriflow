@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import MetaData, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
@@ -42,7 +42,10 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expi
 
 
 class Base(DeclarativeBase):
-    pass
+    # Explicit schema keeps us out of other projects' public tables on shared
+    # Postgres instances (search_path alone is not enough for create_all/reflection).
+    metadata = MetaData(schema=(settings.pg_schema or None)
+                        if settings.database_url.startswith("postgres") else None)
 
 
 def get_db() -> Generator[Session, None, None]:
