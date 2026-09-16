@@ -94,6 +94,11 @@ Full docs: [architecture](docs/architecture.md) ·
   each future path is documented, none is faked.
 - Offline sync queue replays writes; server is last-writer-wins with
   idempotency keys, not full CRDT conflict resolution.
+- The demo deployment shares one free-tier Postgres instance with other demo
+  projects (isolated in its own schema) — it **expires 7 Oct 2026**; data
+  survives redeploys but plan a real instance before then. Open-Meteo's free
+  personal quota occasionally 429s; the app then serves the last good snapshot
+  (stale, with honest timestamp) or degrades confidence — never fabricates.
 
 ## License
 MIT — see [LICENSE](LICENSE).
